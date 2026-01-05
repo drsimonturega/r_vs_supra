@@ -18,6 +18,12 @@ library(tidyverse)
 ### Function used in this analysis
 I don't have a R data science package(library) yet... 
 ```{r df, echo=FALSE}
+
+get_column_value <- function(d_frame, d_col) {
+  # Use get() to retrieve the column by its string name
+  get(d_col, d_frame)
+}
+
 hist_kde <- function(d_frame, d_col){
   #col = paste(d_frame,"$",d_col)
   #print(col)
@@ -29,7 +35,7 @@ hist_kde <- function(d_frame, d_col){
   #d_frame <- rlang::sym(d_col)
   #print(d_col)
   #print(class(d_col))
-  data  = get(d_col, envir = d_frame)
+  data  = get(d_col, d_frame )
   hist(data, main=d_col, xlab = d_col, col="blue", freq = FALSE)
   dens <- density(data)
   lines(dens, lwd = 2, col = "black")
@@ -56,7 +62,8 @@ summary(df)
 
 ### Colored Histogram with Different Number of Bins
 ```{r df}
-hist_kde(df, "Part_buried" )
+
+hist_kde(df, "Part_buried")
 ```
 
 ```{r df, echo=FALSE}
