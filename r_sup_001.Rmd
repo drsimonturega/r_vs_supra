@@ -15,7 +15,29 @@ library(tidyverse)
 
 <https://doi.org/10.1039/C5SC00534E>
 
+### Function used in this analysis
+I don't have a R data science package(library) yet... 
+```{r df, echo=FALSE}
+hist_kde <- function(d_frame, d_col){
+  #col = paste(d_frame,"$",d_col)
+  #print(col)
+  #print(class(col))
+  #d_frame <- rlang::sym(d_frame)
+  #dframe <- mutate
+  #print(d_frame)
+  #print(class(d_frame))
+  #d_frame <- rlang::sym(d_col)
+  #print(d_col)
+  #print(class(d_col))
+  data  = get(d_col, envir = d_frame)
+  hist(data, main=d_col, xlab = d_col, col="blue", freq = FALSE)
+  dens <- density(data)
+  lines(dens, lwd = 2, col = "black")
+}
+```
+
 ## Replication of our analysis in the manuscript using python
+
 
 ### We load and clean data from the supporting information
 
@@ -33,6 +55,10 @@ summary(df)
  
 
 ### Colored Histogram with Different Number of Bins
+```{r df}
+hist_kde(df, "Part_buried" )
+```
+
 ```{r df, echo=FALSE}
 hist(df$Part_buried, main="Part_buried", xlab = "Part_buried", col="blue", freq = FALSE)
 dens <- density(df$Part_buried)
