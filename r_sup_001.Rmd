@@ -9,6 +9,10 @@ output:
 
 ```{r include=FALSE}
 library(tidyverse)
+#install.packages("reshape2")
+library(reshape2)
+library(ggplot2)
+# You may have to instal tinytex
 #tinytex::install_tinytex()
 ```
 
@@ -63,11 +67,8 @@ q_q_plot <- function(d_frame, d_col){
 multi_plot <- function(d_frame,plot_t){
  # multi plot 
   n_col = ncol(d_frame)
-  print(n_col)
   n_plot = int_made_even(n_col)
-  print(n_plot)
   col_names = colnames(d_frame)
-  print(n_plot)
   # make plots
   par(mfrow=c(2,(n_plot/2) ))
   for (col in col_names)
@@ -101,26 +102,41 @@ summary(df)
  summary(df)
 ```
 
-```{r }
-col_names = colnames(df)
-print(ncol(df))
-print(col_names[1])
-int_made_even(3)
-```
 
-### Colored Histogram with KDE line for clarity
+### Histogram with KDE line for clarity
+The histogram is in blue bars. The Kernel Density Estimation line is and estimation of the histogram represented as a continuous line and is shown as a black line.
 ```{r }
 
 hist_kde(df, "Part_buried")
 ```
-
+Its helpful to plot all dataframe columns
 ```{r }
 multi_plot(df, hist_kde)
 ```
+
 ### Quantile quantile plots
 Our quantile quantile plots show us weather our data fits to a theoretical distribution 
-```{r }
+```{r multi-plot quantile quantile }
 multi_plot(df, q_q_plot)
 
 ```
-This is experimental data from 69 individual data points our team generated so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript is at 95% confidence.
+
+This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript is at 95% confidence.
+
+### Correlation matrix heatmap
+Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated models cause a misrepresentation of those molecular descriptors in our regression model.
+```{r preparing the data}
+cor_mat <- round(cor(df),2)
+head(cor_mat)
+```
+Reshape our dataframe
+```{r reshape data}
+melted_cor_mat <- melt(cor_mat)
+head(melted_cor_mat)
+```
+```{r corr heatmap}
+ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  ggtitle("Correlation plot for functions from GoldPLP") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
