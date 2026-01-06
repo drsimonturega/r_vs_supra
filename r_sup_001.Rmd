@@ -25,23 +25,23 @@ get_column_value <- function(d_frame, d_col) {
   get(d_col, d_frame)
 }
 
-hist_ylims <- function(d_frame, d_col){
+
+hist_ylims <- function(dens){
   # Get y axis limits for a column from a data frame
-  data = get_column_value(d_frame, d_col)
-  y_ran = range(data)
-  y_max = max(data)
-  print(typeof(y_ran))
-  print(y_ran)
- }
+  #data = get_column_value(d_frame, d_col)
+  ylim = c(min(dens$y), c(max(dens$y)))
+  return(ylim)
+  }
+
+
   
 
 hist_kde <- function(d_frame, d_col){
   # Colored Histogram with KDE line for clarity
   data  = get_column_value(d_frame, d_col )
-  hist(data, main=d_col, xlab = d_col, col="blue", freq = FALSE)
   dens <- density(data)
-  hist_ylims(d_frame", "d_col)
-  lines(dens, lwd = 2, col = "black")
+  hist(data, main=d_col, xlab = d_col, ylim = (hist_ylims(dens)), col="blue", freq = FALSE)
+  lines(dens, lwd = 2,  col = "black")
 }
 ```
 
