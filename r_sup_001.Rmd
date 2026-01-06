@@ -21,23 +21,26 @@ I don't have a R data science package(library) yet...
 
 get_column_value <- function(d_frame, d_col) {
   # Use get() to retrieve the column by its string name
+  # expand to use d_cal being a list
   get(d_col, d_frame)
 }
 
+hist_ylims <- function(d_frame, d_col){
+  # Get y axis limits for a column from a data frame
+  data = get_column_value(d_frame, d_col)
+  y_ran = range(data)
+  y_max = max(data)
+  print(typeof(y_ran))
+  print(y_ran)
+ }
+  
+
 hist_kde <- function(d_frame, d_col){
-  #col = paste(d_frame,"$",d_col)
-  #print(col)
-  #print(class(col))
-  #d_frame <- rlang::sym(d_frame)
-  #dframe <- mutate
-  #print(d_frame)
-  #print(class(d_frame))
-  #d_frame <- rlang::sym(d_col)
-  #print(d_col)
-  #print(class(d_col))
-  data  = get(d_col, d_frame )
+  # Colored Histogram with KDE line for clarity
+  data  = get_column_value(d_frame, d_col )
   hist(data, main=d_col, xlab = d_col, col="blue", freq = FALSE)
   dens <- density(data)
+  hist_ylims(d_frame", "d_col)
   lines(dens, lwd = 2, col = "black")
 }
 ```
@@ -60,7 +63,7 @@ summary(df)
 ```
  
 
-### Colored Histogram with Different Number of Bins
+### Colored Histogram with KDE line for clarity
 ```{r df}
 
 hist_kde(df, "Part_buried")
