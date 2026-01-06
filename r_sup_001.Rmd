@@ -25,23 +25,23 @@ get_column_value <- function(d_frame, d_col) {
   get(d_col, d_frame)
 }
 
-hist_ylims <- function(d_frame, d_col){
+
+hist_ylims <- function(dens){
   # Get y axis limits for a column from a data frame
-  data = get_column_value(d_frame, d_col)
-  y_ran = range(data)
-  y_max = max(data)
-  print(typeof(y_ran))
-  print(y_ran)
- }
+  #data = get_column_value(d_frame, d_col)
+  ylim = c(min(dens$y), c(max(dens$y)))
+  return(ylim)
+  }
+
+
   
 
 hist_kde <- function(d_frame, d_col){
   # Colored Histogram with KDE line for clarity
   data  = get_column_value(d_frame, d_col )
-  hist(data, main=d_col, xlab = d_col, col="blue", freq = FALSE)
   dens <- density(data)
-  hist_ylims(d_frame", "d_col)
-  lines(dens, lwd = 2, col = "black")
+  hist(data, main=d_col, xlab = d_col, ylim = (hist_ylims(dens)), col="blue", freq = FALSE)
+  lines(dens, lwd = 2,  col = "black")
 }
 ```
 
@@ -61,7 +61,19 @@ df = read.csv("tab_gold_wt.csv", header = TRUE)
 ```{r df}
 summary(df)
 ```
+ we still have guest number the data frame we will remove it
  
+
+ 
+```{r df}
+ df <- df[-c(1)]
+ summary(df)
+```
+```{r df}
+col_names = colnames(df)
+print(ncol(df))
+print(col_names[1])
+```
 
 ### Colored Histogram with KDE line for clarity
 ```{r df}
@@ -69,19 +81,3 @@ summary(df)
 hist_kde(df, "Part_buried")
 ```
 
-```{r df, echo=FALSE}
-hist(df$Part_buried, main="Part_buried", xlab = "Part_buried", col="blue", freq = FALSE)
-dens <- density(df$Part_buried)
-lines(dens, lwd = 2, col = "black")
-```
-
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r df, echo=FALSE}
-plot(df)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
