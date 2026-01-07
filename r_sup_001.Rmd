@@ -95,8 +95,16 @@ reorder_cormat <- function(mat){
   return(mat)
 }
 
+mat_rear <- function(mat){
+  mat = round(cor(mat),2)
+  mat = reorder_cormat(mat) # order Vars from low to high
+  mat = get_upper_tri(mat)
+  return(mat)
+}
+
 correl_mat_plot <- function(mat, title){
   mat = round(cor(mat),2)
+  mat = reorder_cormat(mat) # order Vars from low to high
   mat = get_upper_tri(mat)
   mat = melt(mat, na.rm = TRUE)
   ggplot(data = mat, aes(x = Var2, y = Var1, fill = value))+
@@ -105,7 +113,8 @@ correl_mat_plot <- function(mat, title){
       midpoint = 0, limit = c(-1,1), space = "Lab", 
       name="Pearson\nCorrelation") +
      theme_minimal()+
-    #geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+    # adds Pearson correlation values
+    geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1,
       size = 12, hjust = 1)) +
     theme(
@@ -118,21 +127,23 @@ correl_mat_plot <- function(mat, title){
 
 correl_mat_plot_2 <- function(mat, title){
   mat = round(cor(mat),2)
+  mat = reorder_cormat(mat) # order Vars from low to high
   mat = get_upper_tri(mat)
   mat = melt(mat, na.rm = TRUE)
-  mat = reorder_cormat(mat)
   ggplot(data = mat, aes(x = Var2, y = Var1, fill = value))+
     geom_tile(color = "white")+
-    scale_fill_gradient2(low = "darkblue", high = "lightblue", mid = "white", 
+    scale_fill_gradient2(low = "darkblue", high = "white", mid = "lightblue", 
       midpoint = 0, limit = c(-1,1), space = "Lab", 
       name="Pearson\nCorrelation") +
      theme_minimal()+
+    # adds Pearson correlation values
     geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1,
-      size = 12, hjust = 1),
+      size = 12, hjust = 1)) +
+    theme(
       axis.title.x = element_blank(),
       axis.title.y = element_blank(),
-      panel.grid.major = element_blank(),
+       panel.grid.major = element_blank(),
       panel.border = element_blank(),
       panel.background = element_blank(),
       axis.ticks = element_blank(),
@@ -141,11 +152,46 @@ correl_mat_plot_2 <- function(mat, title){
       legend.direction = "horizontal")+
       guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
                 title.position = "top", title.hjust = 0.5))+
-    geom_tile() +
+    
     ggtitle(title) +
+    theme(plot.title = element_text(hjust = 0.5)) +
     coord_fixed()
 }
 
+
+correl_mat_plot_3 <- function(mat, title){
+  # no numerical values for correlations
+  mat = round(cor(mat),2)
+  mat = reorder_cormat(mat) # order Vars from low to high
+  mat = get_upper_tri(mat)
+  mat = melt(mat, na.rm = TRUE)
+  ggplot(data = mat, aes(x = Var2, y = Var1, fill = value))+
+    geom_tile(color = "white")+
+    scale_fill_gradient2(low = "darkblue", high = "white", mid = "lightblue", 
+      midpoint = 0, limit = c(-1,1), space = "Lab", 
+      name="Pearson\nCorrelation") +
+     theme_minimal()+
+    # adds Pearson correlation values
+    #geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1,
+      size = 12, hjust = 1)) +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+       panel.grid.major = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      legend.justification = c(1, 0),
+      legend.position = c(0.6, 0.7),
+      legend.direction = "horizontal")+
+      guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))+
+    
+    ggtitle(title) +
+    theme(plot.title = element_text(hjust = 0.5)) +
+    coord_fixed()
+  }
   
 ```
 
@@ -212,7 +258,9 @@ ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) +
   ggtitle("Correlation plot for functions from GoldPLP") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
-
 ```{r neater correlatio matrix}
-correl_mat_plot(df, "Correlation plot for functions from GoldPLP")
+correl_mat_plot_3(df, "Correlation plot for functions from GoldPLP")
 ```
+You can make your correlation plot neater but thety are not really pretty.
+
+
