@@ -212,7 +212,6 @@ ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) +
   ggtitle("Correlation plot for functions from GoldPLP") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
-
 ```{r neater correlatio matrix}
 correl_mat_plot(df, "Correlation plot for functions from GoldPLP")
 ```
