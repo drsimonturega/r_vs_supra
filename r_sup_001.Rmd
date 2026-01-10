@@ -3,8 +3,8 @@ title: "vs_sup"
 author: "drsimonturega"
 date: "2025-12-16"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r include=FALSE}
@@ -258,9 +258,17 @@ ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) +
   ggtitle("Correlation plot for functions from GoldPLP") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
-```{r neater correlatio matrix}
+
+```{r neater correlatio matrix_2}
+correl_mat_plot_2(df, "Correlation plot for functions from GoldPLP")
+```
+
+```{r neater correlatio matrix_3}
 correl_mat_plot_3(df, "Correlation plot for functions from GoldPLP")
 ```
-You can make your correlation plot neater but thety are not really pretty.
 
+You can make your correlation plot neater but they are not really pretty.
+
+## Replication of our analysis in the manuscript using R
+We take a set df cleaned and prepared in the python verson of this lecture.
 
