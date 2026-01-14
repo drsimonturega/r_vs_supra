@@ -272,3 +272,9 @@ You can make your correlation plot neater but they are not really pretty.
 ## Replication of our analysis in the manuscript using R
 We take a set df cleaned and prepared in the python verson of this lecture.
 
+### We load cleaned data from the supporting information
+
+```{r load datata science style df}
+df_chemplp_score = read.csv("chemplp_score.csv", header = TRUE)
+```
+
