@@ -8,12 +8,16 @@ output:
 ---
 
 ```{r include=FALSE}
+#installed rmarkdown ggplot2
 library(tidyverse)
 #install.packages("reshape2")
 library(reshape2)
 library(ggplot2)
 # You may have to instal tinytex
 #tinytex::install_tinytex()
+#install.packages("Metrics")
+library(Metrics)
+
 ```
 
 # Virtual screening for high affinity guests for synthetic supramolecular receptors
@@ -191,7 +195,7 @@ correl_mat_plot_3 <- function(mat, title){
     ggtitle(title) +
     theme(plot.title = element_text(hjust = 0.5)) +
     coord_fixed()
-  }
+}
   
 ```
 
@@ -274,7 +278,231 @@ We take a set df cleaned and prepared in the python verson of this lecture.
 
 ### We load cleaned data from the supporting information
 
-```{r load datata science style df}
+```{r load df for first manuscript plot}
 df_chemplp_score = read.csv("chemplp_score.csv", header = TRUE)
+dim(df_chemplp_score)
 ```
 
+### Comparision of logKexp and ChemPLP_Score for training set from the manuscript
+```{r linear regession}
+corr_man = lm(ChemPLP_Score~logKexpt, data = df_chemplp_score)
+
+summary(corr_man)$r.squared
+```
+
+```{r plotting logKexp vs ChemPLP_Score}
+
+lm_rsq <- function(mod){
+    m <- mod;
+    rsq <- substitute(italic(r)^2~"="~r2, 
+         list(r2 = format(summary(m)$r.squared, digits = 3)))
+    as.character(as.expression(rsq));
+}
+
+
+
+ggplot(data = df_chemplp_score, aes(x=logKexpt, y=ChemPLP_Score)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = 60, label = lm_rsq(corr_man), parse = TRUE)
+  
+#print(lm_rsq(corr_man))
+```
+### Multivariate linear regression on the training set from the manuscript using eq. 2
+Slice our data set
+```{r Slicing our df to replicate manuscript}
+df_train <- df[1:54,]
+df_test <- df[55:69,]
+print("Dimensions of training set")
+print(dim(df_train))
+print("Dimensions of test set")
+print(dim(df_test))
+```
+```{r Print summary}
+summary(df_train)
+```
+
+
+```{r run regression analysis}
+# no ligand_flexibility
+eq2_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar,data = df_train)
+summary(eq2_lm)
+```
+
+```{r predict logK for training set}
+
+
+logKcalc = predict(eq2_lm, select(df_train,c(1:5)))
+```
+
+```{r calculate rmse for this model}
+
+df_train["logKcalc"] = logKcalc
+rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
+
+
+```
+
+
+```{r plot logKexp vs logKcalc}
+
+ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+```
+```{r predict logK for test set}
+
+logKcalc_test = predict(eq2_lm, select(df_test,c(1:5)))
+
+```
+
+```{r calculate rmse for this model}
+
+df_test["logKcalc"] = logKcalc_test
+rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
+
+```
+
+
+```{r predict logK for training set}
+
+
+logKcalc = predict(eq2_lm, select(df_train,c(1:5)))
+```
+
+```{r calculate rmse for this model}
+
+df_train["logKcalc"] = logKcalc
+rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
+
+
+```
+
+
+`
+
+
+```{r plot logKexp vs logKcalc}
+
+ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+
+```
+
+### Multivariate linear regression on the training set from the manuscript using eq. 3
+Slice our data set
+```{r Slicing our df to replicate manuscript}
+df_train <- df[1:54,]
+df_test <- df[55:69,]
+print("Dimensions of training set")
+print(dim(df_train))
+print("Dimensions of test set")
+print(dim(df_test))
+```
+
+```{r run regression analysis}
+# with ligand_flexibility
+eq3_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar
+             + Ligand_flexibility, data = df_train)
+summary(eq3_lm)
+```
+```{r predict logK for training set}
+
+
+logKcalc = predict(eq3_lm, select(df_train,c(1:6)))
+```
+
+
+```{r calculate rmse for this model}
+
+df_train["logKcalc"] = logKcalc
+rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
+
+
+```
+
+```{r plot logKexp vs logKcalc}
+
+ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+```
+```{r predict logK for test set}
+
+logKcalc_test = predict(eq3_lm, select(df_test,c(1:6)))
+
+```
+
+```{r calculate rmse for this model}
+
+df_test["logKcalc"] = logKcalc_test
+rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
+
+```
+
+
+`
+
+```{r calculate rmse for this model}
+
+df_test["logKcalc"] = logKcalc_test
+rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
+
+
+```
+
+```{r plot logKexp vs logKcalc}
+
+ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+
+```
