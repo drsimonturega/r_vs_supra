@@ -19,6 +19,7 @@ library(ggplot2)
 #install.packages("Metrics")
 #install.packages("rtools")
 #install.packages("randomForest")
+library(randomForest)
 library(Metrics)
 library(caret)
 #install.packages("neuralnet")
@@ -205,84 +206,16 @@ correl_mat_plot_3 <- function(mat, title){
 ```
 
 ## Replication of our analysis in the manuscript using R
+We take a set df cleaned and prepared in the python verson of this lecture.
 
-
-### We load cleaned data from the supporting information
+### We load cleaned data molecular descriptors from the supporting information
 Students, visualise the molecular descriptors using R studio
 
 ```{r load datata science style df}
 df = read.csv("tab_gold_wt.csv", header = TRUE)
 ```
 
-## Run some exploratory data analysis
-
-### Data summary
-
-```{r }
-summary(df)
-```
- we still have guest number the data frame we will remove it
- 
-
- 
-```{r remove column with guest number}
- df <- df[-c(1)]
- summary(df)
-```
-
-
-### Histogram with KDE line for clarity
-The histogram is in blue bars. The Kernel Density Estimation line is and estimation of the histogram represented as a continuous line and is shown as a black line.
-```{r }
-
-hist_kde(df, "Part_buried")
-```
-Its helpful to plot all dataframe columns
-```{r }
-multi_plot(df, hist_kde)
-```
-
-### Quantile quantile plots
-Our quantile quantile plots show us weather our data fits to a theoretical distribution 
-```{r multi-plot quantile quantile }
-multi_plot(df, q_q_plot)
-
-```
-
-This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript at 95% confidence. The data will correlate to a scientific hypothesis!
-
-### Correlation matrix heatmap
-Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
-```{r preparing the data}
-cor_mat <- round(cor(df),2)
-head(cor_mat)
-```
-Reshape our dataframe
-```{r reshape data}
-melted_cor_mat <- melt(cor_mat)
-head(melted_cor_mat)
-```
-```{r corr heatmap}
-ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile() +
-  ggtitle("Correlation plot for functions from GoldPLP") +
-  theme(plot.title = element_text(hjust = 0.5))
-```
-
-```{r neater correlatio matrix_2}
-correl_mat_plot_2(df, "Correlation plot for functions from GoldPLP")
-```
-
-```{r neater correlatio matrix_3}
-correl_mat_plot_3(df, "Correlation plot for functions from GoldPLP")
-```
-
-You can make your correlation plot neater but they are not really pretty.
-
-## Replication of our analysis in the manuscript using R
-We take a set df cleaned and prepared in the python verson of this lecture.
-
-### We load cleaned data from the supporting information
+### We load cleaned chemplp_score data from the supporting information
 
 ```{r load df for first manuscript plot}
 df_chemplp_score = read.csv("chemplp_score.csv", header = TRUE)
@@ -321,6 +254,7 @@ ggplot(data = df_chemplp_score, aes(x=logKexpt, y=ChemPLP_Score)) +
   
 #print(lm_rsq(corr_man))
 ```
+
 ### Multivariate linear regression on the training set from the manuscript using eq. 2
 The eq.2 includes molecular descriptors calculated in Gold. Then we slice our data set as in the manuscript and check dimensions.
 ```{r Slicing our df to replicate manuscript}
@@ -438,7 +372,76 @@ paste("rmse = ", rmse_value)
 
 ```
 
+## END OF LECTURE ONE
+
+
+
 ## Modern data science approach using eq3
+
+## Run some exploratory data analysis
+
+### Data summary
+
+```{r }
+summary(df)
+```
+ we still have guest number the data frame we will remove it
+ 
+
+ 
+```{r remove column with guest number}
+ df <- df[-c(1)]
+ summary(df)
+```
+
+
+### Histogram with KDE line for clarity
+The histogram is in blue bars. The Kernel Density Estimation line is and estimation of the histogram represented as a continuous line and is shown as a black line.
+```{r Histogram with KDE line}
+hist_kde(df, "Part_buried")
+```
+Its helpful to plot all dataframe columns
+```{r multi histogram with KDE line}
+multi_plot(df, hist_kde)
+```
+
+### Quantile quantile plots
+Our quantile quantile plots show us weather our data fits to a theoretical distribution 
+```{r multi-plot quantile quantile }
+multi_plot(df, q_q_plot)
+
+```
+
+This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript at 95% confidence. The data will correlate to a scientific hypothesis!
+
+### Correlation matrix heatmap
+Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
+```{r preparing the data}
+cor_mat <- round(cor(df),2)
+head(cor_mat)
+```
+Reshape our dataframe
+```{r reshape data}
+melted_cor_mat <- melt(cor_mat)
+head(melted_cor_mat)
+```
+```{r corr heatmap}
+ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() +
+  ggtitle("Correlation plot for functions from GoldPLP") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r neater correlatio matrix_2}
+correl_mat_plot_2(df, "Correlation plot for functions from GoldPLP")
+```
+
+```{r neater correlatio matrix_3}
+correl_mat_plot_3(df, "Correlation plot for functions from GoldPLP")
+```
+
+You can make your correlation plot neater but they are not really pretty.
+
 ### Normalise our df 
 
 ```{r}
@@ -452,15 +455,12 @@ df[1:5] <- predict(process, as.data.frame(df[1:5]))
 ```{r}
 head(df)
 ```
-### A randon forest dession tree method
+### A random forest decision tree method
 #### Splitting our data in to training and test sets
 
 ``` {r spliting our data}
-
-
-library(randomForest)
 set.seed(89)
-sample <- sample.int(n = nrow(df), size = floor(.70*nrow(df)), replace = F)
+sample <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
 train <- df[sample, ]
 test  <- df[-sample, ]
 print("Dimensions of training set")
@@ -468,16 +468,14 @@ print(dim(train))
 print("Dimensions of test set")
 print(dim(test))
 ```
-
+Fit our regression model and produce a description of the model, be-aware this is not the analysis of our model.
 ```{r}
 logK.rf <- randomForest(logKexp ~ ., data = train, mtry = 3, importance = TRUE)
 print(logK.rf)
 ```
+Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r prediction of logK for training set}
-logK_prediction <- predict(logK.rf, train)
-train["logKcalc"] <- as.data.frame(logK_predictions)
-
-
+train["logKcalc"] <- predict(logK.rf, train)
 ```
 
 ```{r calaculate rmse}
@@ -485,7 +483,6 @@ rmse_value <- rmse(train$logKcalc, train$logKexp)
 ```
 
 ```{r plot logKexp vs logKcalc}
-
 ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -502,8 +499,7 @@ paste("rmse = ", rmse_value)
 ```
 
 ```{r prediction of logK for training set}
-logK_prediction_test <- predict(logK.rf, test)
-test["logKcalc"] <- as.data.frame(logK_prediction_test)
+test["logKcalc"] <- predict(logK.rf, test)
 ```
 
 ```{r calaculate rmse}
@@ -520,13 +516,12 @@ ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
                                     fill = NA, 
                                     size = 2),
     panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
-  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
-  
-paste("rmse = ", rmse_value)
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
+  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  paste("rmse = ", rmse_value)
 ```
-#### A Multilayer Perceptron nureal netowrks method
-
+### A Multilayer Perceptron neural networks method
+#### Splitting our data in to training and test sets
 ```{r}
 set.seed(89)
 sample <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
@@ -537,15 +532,14 @@ print(dim(train))
 print("Dimensions of test set")
 print(dim(test))
 ```
-
+Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r formulate and train the MLP}
 # formulate eq 3 for our model
 eq_3_form <- logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar + Ligand_flexibility
 # Train the MLP model
 model <- neuralnet(eq_3_form, data = train, hidden = c(5, 3), linear.output = TRUE, stepmax=1e7)
 ```
-
-
+Produce a description of the model, be-aware this is not the analysis of our model.
 ```{r}
 plot(model)
 ```
