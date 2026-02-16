@@ -8,6 +8,7 @@ output:
 ---
 
 ```{r include=FALSE}
+# Installing libraries required for our lecture
 #installed rmarkdown ggplot2
 library(tidyverse)
 #install.packages("reshape2")
@@ -16,8 +17,12 @@ library(ggplot2)
 # You may have to instal tinytex
 #tinytex::install_tinytex()
 #install.packages("Metrics")
+#install.packages("rtools")
+#install.packages("randomForest")
 library(Metrics)
-
+library(caret)
+#install.packages("neuralnet")
+library(neuralnet)
 ```
 
 # Virtual screening for high affinity guests for synthetic supramolecular receptors
@@ -26,7 +31,7 @@ library(Metrics)
 
 <https://doi.org/10.1039/C5SC00534E>
 
-### Function used in this analysis
+### Functions used in this analysis
 I don't have a R data science package(library) yet... 
 ```{r my_functions, echo=FALSE}
 
@@ -199,10 +204,11 @@ correl_mat_plot_3 <- function(mat, title){
   
 ```
 
-## Replication of our analysis in the manuscript using python
+## Replication of our analysis in the manuscript using R
 
 
 ### We load cleaned data from the supporting information
+Students, visualise the molecular descriptors using R studio
 
 ```{r load datata science style df}
 df = read.csv("tab_gold_wt.csv", header = TRUE)
@@ -219,7 +225,7 @@ summary(df)
  
 
  
-```{r}
+```{r remove column with guest number}
  df <- df[-c(1)]
  summary(df)
 ```
@@ -243,10 +249,10 @@ multi_plot(df, q_q_plot)
 
 ```
 
-This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript is at 95% confidence.
+This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript at 95% confidence. The data will correlate to a scientific hypothesis!
 
 ### Correlation matrix heatmap
-Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated models cause a misrepresentation of those molecular descriptors in our regression model.
+Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
 ```{r preparing the data}
 cor_mat <- round(cor(df),2)
 head(cor_mat)
@@ -316,7 +322,7 @@ ggplot(data = df_chemplp_score, aes(x=logKexpt, y=ChemPLP_Score)) +
 #print(lm_rsq(corr_man))
 ```
 ### Multivariate linear regression on the training set from the manuscript using eq. 2
-Slice our data set
+The eq.2 includes molecular descriptors calculated in Gold. Then we slice our data set as in the manuscript and check dimensions.
 ```{r Slicing our df to replicate manuscript}
 df_train <- df[1:54,]
 df_test <- df[55:69,]
@@ -325,11 +331,7 @@ print(dim(df_train))
 print("Dimensions of test set")
 print(dim(df_test))
 ```
-```{r Print summary}
-summary(df_train)
-```
-
-
+We run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r run regression analysis}
 # no ligand_flexibility
 eq2_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar,data = df_train)
@@ -337,22 +339,15 @@ summary(eq2_lm)
 ```
 
 ```{r predict logK for training set}
-
-
 logKcalc = predict(eq2_lm, select(df_train,c(1:5)))
 ```
 
 ```{r calculate rmse for this model}
-
 df_train["logKcalc"] = logKcalc
 rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
-
-
 ```
 
-
 ```{r plot logKexp vs logKcalc}
-
 ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -364,61 +359,11 @@ ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
     panel.background = element_blank()) +
   geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
   geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
-  
 paste("rmse = ", rmse_value)
-```
-```{r predict logK for test set}
-
-logKcalc_test = predict(eq2_lm, select(df_test,c(1:5)))
-
-```
-
-```{r calculate rmse for this model}
-
-df_test["logKcalc"] = logKcalc_test
-rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
-
-```
-
-
-```{r predict logK for training set}
-
-
-logKcalc = predict(eq2_lm, select(df_train,c(1:5)))
-```
-
-```{r calculate rmse for this model}
-
-df_train["logKcalc"] = logKcalc
-rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
-
-
-```
-
-
-`
-
-
-```{r plot logKexp vs logKcalc}
-
-ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
-  geom_point(size=3, shape=23) +
-  theme(axis.line = element_line(colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_rect(color = 'black', 
-                                    fill = NA, 
-                                    size = 2),
-    panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
-  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
-  
-paste("rmse = ", rmse_value)
-
 ```
 
 ### Multivariate linear regression on the training set from the manuscript using eq. 3
-Slice our data set
+The eq.3 includes a molecular descriptor for ligand flexibility this was calculated outside of gold. Then we slice our data set as in the manuscript and check dimensions.
 ```{r Slicing our df to replicate manuscript}
 df_train <- df[1:54,]
 df_test <- df[55:69,]
@@ -427,13 +372,14 @@ print(dim(df_train))
 print("Dimensions of test set")
 print(dim(df_test))
 ```
-
+Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r run regression analysis}
 # with ligand_flexibility
 eq3_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar
              + Ligand_flexibility, data = df_train)
 summary(eq3_lm)
 ```
+
 ```{r predict logK for training set}
 
 
@@ -460,38 +406,87 @@ ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
                                     fill = NA, 
                                     size = 2),
     panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
-  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
+  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
   
 paste("rmse = ", rmse_value)
 ```
+### Analysis of new guests from the manuscripts
+To rapidly test our model we computationaly screened the labs inventory using the eq. 3 model to quickly find molecules to test the predictive model with. 
 ```{r predict logK for test set}
-
 logKcalc_test = predict(eq3_lm, select(df_test,c(1:6)))
-
 ```
 
 ```{r calculate rmse for this model}
-
 df_test["logKcalc"] = logKcalc_test
 rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
+```
+
+```{r plot logKexp vs logKcalc}
+ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
+  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+paste("rmse = ", rmse_value)
 
 ```
 
+## Modern data science approach using eq3
+### Normalise our df 
 
-`
+```{r}
+head(df)
+```
+```{r}
+process <- preProcess(as.data.frame(df[1:5]), method=c("range"))
+df[1:5] <- predict(process, as.data.frame(df[1:5]))
+```
 
-```{r calculate rmse for this model}
+```{r}
+head(df)
+```
+### A randon forest dession tree method
+#### Splitting our data in to training and test sets
 
-df_test["logKcalc"] = logKcalc_test
-rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
+``` {r spliting our data}
 
 
+library(randomForest)
+set.seed(89)
+sample <- sample.int(n = nrow(df), size = floor(.70*nrow(df)), replace = F)
+train <- df[sample, ]
+test  <- df[-sample, ]
+print("Dimensions of training set")
+print(dim(train))
+print("Dimensions of test set")
+print(dim(test))
+```
+
+```{r}
+logK.rf <- randomForest(logKexp ~ ., data = train, mtry = 3, importance = TRUE)
+print(logK.rf)
+```
+```{r prediction of logK for training set}
+logK_prediction <- predict(logK.rf, train)
+train["logKcalc"] <- as.data.frame(logK_predictions)
+
+
+```
+
+```{r calaculate rmse}
+rmse_value <- rmse(train$logKcalc, train$logKexp)
 ```
 
 ```{r plot logKexp vs logKcalc}
 
-ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
+ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
     panel.grid.major = element_blank(),
@@ -504,5 +499,102 @@ ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
   geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
   
 paste("rmse = ", rmse_value)
+```
 
+```{r prediction of logK for training set}
+logK_prediction_test <- predict(logK.rf, test)
+test["logKcalc"] <- as.data.frame(logK_prediction_test)
+```
+
+```{r calaculate rmse}
+rmse_value <- rmse(test$logKcalc, test$logKexp)
+```
+
+```{r plot logKexp vs logKcalc}
+ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
+  geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+```
+#### A Multilayer Perceptron nureal netowrks method
+
+```{r}
+set.seed(89)
+sample <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
+train <- df[sample, ]
+test  <- df[-sample, ]
+print("Dimensions of training set")
+print(dim(train))
+print("Dimensions of test set")
+print(dim(test))
+```
+
+```{r formulate and train the MLP}
+# formulate eq 3 for our model
+eq_3_form <- logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar + Ligand_flexibility
+# Train the MLP model
+model <- neuralnet(eq_3_form, data = train, hidden = c(5, 3), linear.output = TRUE, stepmax=1e7)
+```
+
+
+```{r}
+plot(model)
+```
+
+```{r prediction of logK for training set}
+train["logKcalc"] <- predict(model, train)
+#head(train)
+```
+
+```{r calaculate rmse}
+rmse_value <- rmse(train$logKcalc, train$logKexp)
+```
+
+```{r plot logKexp vs logKcalc}
+ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
+  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  
+paste("rmse = ", rmse_value)
+```
+
+```{r prediction of logK for test set}
+test["logKcalc"] <- predict(model, test)
+#head(test)
+```
+
+```{r calaculate rmse}
+rmse_value <- rmse(test$logKcalc, test$logKexp)
+```
+
+```{r plot logKexp vs logKcalc}
+ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
+  geom_point(size=3, shape=23) +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color = 'black', 
+                                    fill = NA, 
+                                    size = 2),
+    panel.background = element_blank()) +
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
+  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+paste("rmse = ", rmse_value)
 ```
