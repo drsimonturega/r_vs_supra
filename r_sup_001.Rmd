@@ -3,8 +3,8 @@ title: "vs_sup"
 author: "drsimonturega"
 date: "2025-12-16"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r include=FALSE}
@@ -14,7 +14,7 @@ output:
 library(reshape2)
 library(ggplot2)
 # You may have to instal tinytex
-tinytex::install_tinytex()
+#tinytex::install_tinytex()
 #install.packages("Metrics")
 #install.packages("rtools")
 #install.packages("randomForest")
@@ -158,7 +158,7 @@ dim(df_chemplp_score)
 ```
 
 ### Comparision of logKexp and ChemPLP_Score for training set from the manuscript
-```{r linear regession}
+```{r logKexp and ChemPLP_Score linear regession}
 corr_man = lm(ChemPLP_Score~logKexpt, data = df_chemplp_score)
 
 summary(corr_man)$r.squared
@@ -186,13 +186,11 @@ ggplot(data = df_chemplp_score, aes(x=logKexpt, y=ChemPLP_Score)) +
     panel.background = element_blank()) +
   geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) +
   geom_text(x = 1, y = 60, label = lm_rsq(corr_man), parse = TRUE)
-  
-#print(lm_rsq(corr_man))
 ```
 
 ### Multivariate linear regression on the training set from the manuscript using eq. 2
 The eq.2 includes molecular descriptors calculated in Gold. Then we slice our data set as in the manuscript and check dimensions.
-```{r Slicing our df to replicate manuscript}
+```{r Slicing our df to replicate manuscript eq.2}
 df_train <- df[1:54,]
 df_test <- df[55:69,]
 print("Dimensions of training set")
@@ -201,22 +199,22 @@ print("Dimensions of test set")
 print(dim(df_test))
 ```
 We run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
-```{r run regression analysis}
+```{r eq.2 run regression analysis}
 # no ligand_flexibility
 eq2_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar,data = df_train)
 summary(eq2_lm)
 ```
 
-```{r predict logK for training set}
+```{r eq.2 predict logK for training set}
 logKcalc = predict(eq2_lm, df_train)
 ```
 
-```{r calculate rmse for this model}
+```{r eq.2 calculate rmse for training set}
 df_train["logKcalc"] = logKcalc
 rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r plot eq.2 training set logKexp vs logKcalc}
 ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -233,7 +231,7 @@ paste("rmse = ", rmse_value)
 
 ### Multivariate linear regression on the training set from the manuscript using eq. 3
 The eq.3 includes a molecular descriptor for ligand flexibility this was calculated outside of gold. Then we slice our data set as in the manuscript and check dimensions.
-```{r Slicing our df to replicate manuscript}
+```{r Slicing our df to replicate manuscript eq.3}
 df_train <- df[1:54,]
 df_test <- df[55:69,]
 print("Dimensions of training set")
@@ -242,21 +240,21 @@ print("Dimensions of test set")
 print(dim(df_test))
 ```
 Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
-```{r run regression analysis}
+```{r run regression analysis eq.3}
 # with ligand_flexibility
 eq3_lm = lm(logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar
              + Ligand_flexibility, data = df_train)
 summary(eq3_lm)
 ```
 
-```{r predict logK for training set}
+```{r predict logK for training set eq 3.}
 
 
 logKcalc = predict(eq3_lm, df_train)
 ```
 
 
-```{r calculate rmse for this model}
+```{r calculate rmse for training set eq 3.}
 
 df_train["logKcalc"] = logKcalc
 rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
@@ -264,7 +262,7 @@ rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
 
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r training set eq 3. plot logKexp vs logKcalc}
 
 ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
@@ -282,16 +280,16 @@ paste("rmse = ", rmse_value)
 ```
 ### Analysis of new guests from the manuscripts
 To rapidly test our model we computationaly screened the labs inventory using the eq. 3 model to quickly find molecules to test the predictive model with. 
-```{r predict logK for test set}
+```{r predict logK for test set eq.3}
 logKcalc_test = predict(eq3_lm, df_test)
 ```
 
-```{r calculate rmse for this model}
+```{r calculate rmse for test set eq.3}
 df_test["logKcalc"] = logKcalc_test
 rmse_value <- rmse(df_test$logKcalc, df_test$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r test set eq.3 plot logKexp vs logKcalc}
 ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -317,7 +315,7 @@ paste("rmse = ", rmse_value)
 
 ### Data summary
 
-```{r }
+```{r lecture 2 df summary}
 summary(df)
 ```
  we still have guest number the data frame we will remove it
@@ -342,12 +340,12 @@ multi_plot(df, hist_kde)
 
 ### Correlation matrix heatmap
 Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
-```{r preparing the data}
+```{r Correlation matrix heatmap preparing the data}
 cor_mat <- round(cor(df),2)
 head(cor_mat)
 ```
 Reshape our dataframe
-```{r reshape data}
+```{r Correlation matrix heatmap reshape data}
 melted_cor_mat <- melt(cor_mat)
 head(melted_cor_mat)
 ```
@@ -360,22 +358,22 @@ You can make your correlation plot neater but they are not really pretty.
 
 ### Normalise our df 
 
-```{r}
+```{r pre normalise}
 head(df)
 ```
 
-```{r}
+```{r normilise}
 process <- preProcess(as.data.frame(df[1:5]), method=c("range"))
 df[1:5] <- predict(process, as.data.frame(df[1:5]))
 ```
 
-```{r}
+```{r post normilise}
 head(df)
 ```
 ### A random forest decision tree method
 #### Splitting our data in to training and test sets
 
-``` {r spliting our data}
+``` {r random forest spliting our data}
 set.seed(89)
 sample <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
 train <- df[sample, ]
@@ -386,20 +384,20 @@ print("Dimensions of test set")
 print(dim(test))
 ```
 Fit our regression model and produce a description of the model, be-aware this is not the analysis of our model.
-```{r}
+```{r random forest fit model}
 logK.rf <- randomForest(logKexp ~ ., data = train, mtry = 3, importance = TRUE)
 print(logK.rf)
 ```
 Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
-```{r prediction of logK for training set}
+```{r random forest prediction of logK for training set}
 train["logKcalc"] <- predict(logK.rf, train)
 ```
 
-```{r calaculate rmse}
+```{r random forest calaculate rmse traning set}
 rmse_value <- rmse(train$logKcalc, train$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r random forest traning set plot logKexp vs logKcalc}
 ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -415,15 +413,15 @@ ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
 paste("rmse = ", rmse_value)
 ```
 
-```{r prediction of logK for training set}
+```{r prediction of logK for random forest test set}
 test["logKcalc"] <- predict(logK.rf, test)
 ```
 
-```{r calaculate rmse}
+```{r calaculate rmse random forest test set}
 rmse_value <- rmse(test$logKcalc, test$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r random forest test set plot logKexp vs logKcalc}
 ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -439,7 +437,7 @@ ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
 ```
 ### A Multilayer Perceptron neural networks method
 #### Splitting our data in to training and test sets
-```{r}
+```{r MLP data split}
 set.seed(89)
 sample <- sample.int(n = nrow(df), size = floor(.80*nrow(df)), replace = F)
 train <- df[sample, ]
@@ -456,21 +454,17 @@ eq_3_form <- logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar + L
 # Train the MLP model
 model <- neuralnet(eq_3_form, data = train, hidden = c(5, 3), linear.output = TRUE, stepmax=1e7)
 ```
-Produce a description of the model, be-aware this is not the analysis of our model.
-```{r}
-plot(model)
-```
 
-```{r prediction of logK for training set}
+```{r MLP prediction of logK for training set}
 train["logKcalc"] <- predict(model, train)
 #head(train)
 ```
 
-```{r calaculate rmse}
+```{r MLP training set calaculate rmse}
 rmse_value <- rmse(train$logKcalc, train$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r MLP training set plot logKexp vs logKcalc}
 ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -486,16 +480,16 @@ ggplot(data = train, aes(x=logKexp, y=logKcalc)) +
 paste("rmse = ", rmse_value)
 ```
 
-```{r prediction of logK for test set}
+```{r prediction of logK for MLP test set}
 test["logKcalc"] <- predict(model, test)
 #head(test)
 ```
 
-```{r calaculate rmse}
+```{r MLP test set calaculate rmse}
 rmse_value <- rmse(test$logKcalc, test$logKexp)
 ```
 
-```{r plot logKexp vs logKcalc}
+```{r MLP test set plot logKexp vs logKcalc}
 ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
