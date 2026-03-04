@@ -10,12 +10,11 @@ output:
 ```{r include=FALSE}
 # Installing libraries required for our lecture
 #installed rmarkdown ggplot2
-library(tidyverse)
 #install.packages("reshape2")
 library(reshape2)
 library(ggplot2)
 # You may have to instal tinytex
-#tinytex::install_tinytex()
+tinytex::install_tinytex()
 #install.packages("Metrics")
 #install.packages("rtools")
 #install.packages("randomForest")
@@ -67,13 +66,6 @@ hist_kde <- function(d_frame, d_col){
   lines(dens, lwd = 2,  col = "black")
 }
 
-q_q_plot <- function(d_frame, d_col){
-  # Generate a quartile quartile plot
-  data  = get_column_value(d_frame, d_col )
-  qqnorm(data, main = d_col,  pch = 1)
-  qqline(data, col = "blue", lwd = 2)
-}
-
 multi_plot <- function(d_frame,plot_t){
  # multi plot 
   n_col = ncol(d_frame)
@@ -112,29 +104,6 @@ mat_rear <- function(mat){
   return(mat)
 }
 
-correl_mat_plot <- function(mat, title){
-  mat = round(cor(mat),2)
-  mat = reorder_cormat(mat) # order Vars from low to high
-  mat = get_upper_tri(mat)
-  mat = melt(mat, na.rm = TRUE)
-  ggplot(data = mat, aes(x = Var2, y = Var1, fill = value))+
-    geom_tile(color = "white")+
-    scale_fill_gradient2(low = "darkblue", high = "lightblue", mid = "white", 
-      midpoint = 0, limit = c(-1,1), space = "Lab", 
-      name="Pearson\nCorrelation") +
-     theme_minimal()+
-    # adds Pearson correlation values
-    geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1,
-      size = 12, hjust = 1)) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank()) +
-    ggtitle(title) +
-    theme(plot.title = element_text(hjust = 0.5)) +
-    coord_fixed()
-}
-
 correl_mat_plot_2 <- function(mat, title){
   mat = round(cor(mat),2)
   mat = reorder_cormat(mat) # order Vars from low to high
@@ -169,40 +138,6 @@ correl_mat_plot_2 <- function(mat, title){
 }
 
 
-correl_mat_plot_3 <- function(mat, title){
-  # no numerical values for correlations
-  mat = round(cor(mat),2)
-  mat = reorder_cormat(mat) # order Vars from low to high
-  mat = get_upper_tri(mat)
-  mat = melt(mat, na.rm = TRUE)
-  ggplot(data = mat, aes(x = Var2, y = Var1, fill = value))+
-    geom_tile(color = "white")+
-    scale_fill_gradient2(low = "darkblue", high = "white", mid = "lightblue", 
-      midpoint = 0, limit = c(-1,1), space = "Lab", 
-      name="Pearson\nCorrelation") +
-     theme_minimal()+
-    # adds Pearson correlation values
-    #geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1,
-      size = 12, hjust = 1)) +
-    theme(
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-       panel.grid.major = element_blank(),
-      panel.border = element_blank(),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      legend.justification = c(1, 0),
-      legend.position = c(0.6, 0.7),
-      legend.direction = "horizontal")+
-      guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
-                title.position = "top", title.hjust = 0.5))+
-    
-    ggtitle(title) +
-    theme(plot.title = element_text(hjust = 0.5)) +
-    coord_fixed()
-}
-  
 ```
 
 ## Replication of our analysis in the manuscript using R
@@ -273,7 +208,7 @@ summary(eq2_lm)
 ```
 
 ```{r predict logK for training set}
-logKcalc = predict(eq2_lm, select(df_train,c(1:5)))
+logKcalc = predict(eq2_lm, df_train)
 ```
 
 ```{r calculate rmse for this model}
@@ -317,7 +252,7 @@ summary(eq3_lm)
 ```{r predict logK for training set}
 
 
-logKcalc = predict(eq3_lm, select(df_train,c(1:6)))
+logKcalc = predict(eq3_lm, df_train)
 ```
 
 
@@ -348,7 +283,7 @@ paste("rmse = ", rmse_value)
 ### Analysis of new guests from the manuscripts
 To rapidly test our model we computationaly screened the labs inventory using the eq. 3 model to quickly find molecules to test the predictive model with. 
 ```{r predict logK for test set}
-logKcalc_test = predict(eq3_lm, select(df_test,c(1:6)))
+logKcalc_test = predict(eq3_lm, df_test)
 ```
 
 ```{r calculate rmse for this model}
@@ -405,15 +340,6 @@ Its helpful to plot all dataframe columns
 multi_plot(df, hist_kde)
 ```
 
-### Quantile quantile plots
-Our quantile quantile plots show us weather our data fits to a theoretical distribution 
-```{r multi-plot quantile quantile }
-multi_plot(df, q_q_plot)
-
-```
-
-This is experimental data from 69 individual data points our team generated, so we don't really expect it to fit a normal distribution. We would expect the replicates of **logKexp** to fit a normal distribution and the error quoted in the manuscript at 95% confidence. The data will correlate to a scientific hypothesis!
-
 ### Correlation matrix heatmap
 Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
 ```{r preparing the data}
@@ -425,19 +351,9 @@ Reshape our dataframe
 melted_cor_mat <- melt(cor_mat)
 head(melted_cor_mat)
 ```
-```{r corr heatmap}
-ggplot(data = melted_cor_mat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile() +
-  ggtitle("Correlation plot for functions from GoldPLP") +
-  theme(plot.title = element_text(hjust = 0.5))
-```
 
 ```{r neater correlatio matrix_2}
 correl_mat_plot_2(df, "Correlation plot for functions from GoldPLP")
-```
-
-```{r neater correlatio matrix_3}
-correl_mat_plot_3(df, "Correlation plot for functions from GoldPLP")
 ```
 
 You can make your correlation plot neater but they are not really pretty.
@@ -447,6 +363,7 @@ You can make your correlation plot neater but they are not really pretty.
 ```{r}
 head(df)
 ```
+
 ```{r}
 process <- preProcess(as.data.frame(df[1:5]), method=c("range"))
 df[1:5] <- predict(process, as.data.frame(df[1:5]))
