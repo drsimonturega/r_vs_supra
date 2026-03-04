@@ -165,15 +165,12 @@ summary(corr_man)$r.squared
 ```
 
 ```{r plotting logKexp vs ChemPLP_Score}
-
 lm_rsq <- function(mod){
     m <- mod;
     rsq <- substitute(italic(r)^2~"="~r2, 
          list(r2 = format(summary(m)$r.squared, digits = 3)))
     as.character(as.expression(rsq));
 }
-
-
 
 ggplot(data = df_chemplp_score, aes(x=logKexpt, y=ChemPLP_Score)) +
   geom_point(size=3, shape=23) +
@@ -248,22 +245,16 @@ summary(eq3_lm)
 ```
 
 ```{r predict logK for training set eq 3.}
-
-
 logKcalc = predict(eq3_lm, df_train)
 ```
 
 
 ```{r calculate rmse for training set eq 3.}
-
 df_train["logKcalc"] = logKcalc
 rmse_value <- rmse(df_train$logKcalc, df_train$logKexp)
-
-
 ```
 
 ```{r training set eq 3. plot logKexp vs logKcalc}
-
 ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
   geom_point(size=3, shape=23) +
   theme(axis.line = element_line(colour = "black"),
@@ -273,9 +264,7 @@ ggplot(data = df_train, aes(x=logKexp, y=logKcalc)) +
                                     fill = NA, 
                                     size = 2),
     panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
-  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
-  
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) 
 paste("rmse = ", rmse_value)
 ```
 ### Analysis of new guests from the manuscripts
@@ -299,46 +288,41 @@ ggplot(data = df_test, aes(x=logKexp, y=logKcalc)) +
                                     fill = NA, 
                                     size = 2),
     panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
-  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) 
 paste("rmse = ", rmse_value)
 
 ```
 
 ## END OF LECTURE ONE
 
+## Modern data science approach using eq. 3
 
+### Run some exploratory data analysis
 
-## Modern data science approach using eq3
-
-## Run some exploratory data analysis
-
-### Data summary
+#### Data summary
 
 ```{r lecture 2 df summary}
 summary(df)
 ```
  we still have guest number the data frame we will remove it
  
-
- 
 ```{r remove column with guest number}
  df <- df[-c(1)]
  summary(df)
 ```
 
-
-### Histogram with KDE line for clarity
+#### Histogram with KDE line for clarity
 The histogram is in blue bars. The Kernel Density Estimation line is and estimation of the histogram represented as a continuous line and is shown as a black line.
 ```{r Histogram with KDE line}
 hist_kde(df, "Part_buried")
 ```
+
 Its helpful to plot all dataframe columns
 ```{r multi histogram with KDE line}
 multi_plot(df, hist_kde)
 ```
 
-### Correlation matrix heatmap
+#### Correlation matrix heatmap
 Over correlated molecular descriptor (GoldPLP functions)  columns can cause problems with our regression models. Too many correlated molecular descriptor cause a misrepresentation of those molecular descriptors in our regression model.
 ```{r Correlation matrix heatmap preparing the data}
 cor_mat <- round(cor(df),2)
@@ -383,11 +367,17 @@ print(dim(train))
 print("Dimensions of test set")
 print(dim(test))
 ```
+
+#### Fit our regression model
+
 Fit our regression model and produce a description of the model, be-aware this is not the analysis of our model.
 ```{r random forest fit model}
 logK.rf <- randomForest(logKexp ~ ., data = train, mtry = 3, importance = TRUE)
 print(logK.rf)
 ```
+
+#### Plot logKexp vs logKcalc
+
 Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r random forest prediction of logK for training set}
 train["logKcalc"] <- predict(logK.rf, train)
@@ -447,6 +437,9 @@ print(dim(train))
 print("Dimensions of test set")
 print(dim(test))
 ```
+
+#### Fit our regression model
+
 Then run our regression model calculating a correct analysis of the model by plotting logKexp vs. logKcalc and calculating the rmse. This allows us to test our hypothesis, that we can use the molecular descriptors calculated in Gold to build our own predictive model for cage-guest binding and evaluate the model.
 ```{r formulate and train the MLP}
 # formulate eq 3 for our model
@@ -455,9 +448,10 @@ eq_3_form <- logKexp~Ligand_clash + Ligand_torsion + Part_buried + Non.polar + L
 model <- neuralnet(eq_3_form, data = train, hidden = c(5, 3), linear.output = TRUE, stepmax=1e7)
 ```
 
+#### Plot logKexp vs logKcalc
+
 ```{r MLP prediction of logK for training set}
 train["logKcalc"] <- predict(model, train)
-#head(train)
 ```
 
 ```{r MLP training set calaculate rmse}
@@ -499,7 +493,6 @@ ggplot(data = test, aes(x=logKexp, y=logKcalc)) +
                                     fill = NA, 
                                     size = 2),
     panel.background = element_blank()) +
-  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) #+
-  #geom_text(x = 1, y = -2, label = rmse_value, parse = TRUE)
+  geom_smooth(method = "lm", se=FALSE, color="black", formula = y ~ x) 
 paste("rmse = ", rmse_value)
 ```
